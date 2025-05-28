@@ -66,7 +66,7 @@ nav .circle-wrapper:hover .circle {
 .hero {
     position: relative;
     height: 80vh;
-    background: url('/Img/ModularAISystem.png') no-repeat center center/cover;
+    background: url('../Img/ModularAISystem.png') no-repeat center center/cover;
     display: flex;
     align-items: center;
     justify-content: left;
