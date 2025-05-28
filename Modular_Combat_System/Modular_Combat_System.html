@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Brett Bowley Portfolio</title>
+    <link rel="stylesheet" href="Style.css">
+    <script type="text/javascript" src="JS.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+
+</head>
+
+<body>
+    <nav>
+        <a href="../Index.html">
+            <div class="circle-wrapper">
+                <div class="circle"></div>
+            </div>
+        </a>
+
+        <img id="logo" src="/Img/logo.svg" />
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Modular Combat System</h1>
+            <p>Scroll Down To See Documentation</p>
+        </div>
+    </section>
+
+    <section class="icon-links">
+        <a href="https://www.youtube.com/watch?v=I8TUaeNztkU" target="_blank" title="YouTube" id="YouTube">
+            <i class="fab fa-youtube"></i>
+        </a>
+
+        <a href="https://github.com/Bearium-BB/Dungeon_Crawler_Portfolio" target="_blank" title="GitHub" id="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+    </section>
+
+    <section class="documentation-content">
+        <h2>Introduction</h2>
+        <p>Hi there, this project is a system for modular attacks like a range and a melee attack. This code or modular system is meant to let the user be able to drag and drop a scriptable object into a variable instead of a MonoBehaviour and instantly
+            change the weapon they are using.</p>
+
+        <h2>ICombatAction</h2>
+        <p>ICombatAction is an interface that will help us down the road when we're ready to create ScriptableObjects. These can be used within a single MonoBehaviour variable or function, making it easy to switch weapons.</p>
+
+        <h2>CombatActionSO</h2>
+        <p>CombatActionSO is an abstract class that inherits from ICombatAction. The reason an abstract class is used in this solution is because Unity does not display interfaces in the Inspector by default. By using an abstract class, we can work around
+            this limitation—Unity treats all derived ScriptableObjects as the same base type, allowing us to swap them easily in the Inspector. Of course, there are paid plugins that enable interface support in the Inspector, but since I prefer not to
+            spend money on things I can implement myself, I created this workaround instead.</p>
+
+        <h2>CombatAction[WeaponName]</h2>
+        <p>CombatAction[WeaponName] inherits from CombatActionSO and can be swapped in the Inspector when you have a variable of type CombatActionSO. This is where you'll define your weapons—whether they're entirely different or share similar behavior, depending
+            on what you need.</p>
+
+        <h2>Implementation</h2>
+        <p>
+            If you copy all this code into a Unity project, you should be able to test out the Modular Combat System. If you wish to create your own CombatAction[WeaponName], make sure that you inherit from CombatActionSO.
+        </p>
+
+        <p>
+            On another note, if you prefer not to use ScriptableObjects and want to use MonoBehaviours instead, you'll simply need to create another abstract class that inherits from ICombatAction. Then, replace the ScriptableObject implementation with a MonoBehaviour-based
+            one, and you should be able to create MonoBehaviour versions of the Modular Combat System.
+        </p>
+
+        <p>
+            If you want to call the action, all you need is a variable of type CombatActionSO, and a function that calls the method inside it using combatActionSO.CallAction().
+        </p>
+
+        <h3>ICombatAction</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+
+    public interface ICombatAction
+    {
+        //This function is used to perform the action
+        void CallAction();
+    }
+        </code></pre>
+
+        <h3>CombatActionSO</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+
+    //Use an abstract class here so it works inside the unity inspector instead of directly just using the interface by itself
+    public abstract class CombatActionSO : ScriptableObject, ICombatAction
+    {
+        public abstract void CallAction();
+    }
+        </code></pre>
+
+
+        <h3>ScriptableObjectTransform</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.InputSystem;
+
+    [CreateAssetMenu(fileName = "Transform", menuName = "Data Types/Transform ", order = 3)]
+    public class ScriptableObjectTransform : ScriptableObject
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+
+        private void OnEnable()
+        {
+            position = Vector3.zero;
+        }
+        private void OnDisable()
+        {
+            rotation = Quaternion.identity;
+        }
+    }
+    </code></pre>
+
+        <h3>CombatActionMeleeAttack</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.UIElements;
+
+    [CreateAssetMenu(fileName = "MeleeAttack", menuName = "Combat Action/Melee Attack", order = 0)]
+    public class CombatActionMeleeAttack : CombatActionSO
+    {
+        //This object is a scriptable object that stores players position
+        public ScriptableObjectTransform playerPos;
+        //This is the boxes dimensions
+        public Vector3 sizeBox;
+        public float multiplayerForward;
+
+        //This generates a collision box for a brief moment and checks what is collided with it and then prints the name
+        public override void CallAction()
+        {
+            Collider[] hitColliders = Physics.OverlapBox(playerPos.position + playerPos.rotation * Vector3.forward * multiplayerForward, sizeBox / 2, playerPos.rotation);
+
+            foreach (Collider collider in hitColliders)
+            {
+                Debug.Log(collider.name);
+            }
+        }
+    }
+    </code></pre>
+
+
+        <h3>CombatActionRangeAttack</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+
+
+    [CreateAssetMenu(fileName = "RangeAttack", menuName = "Combat Action/Range Attack", order = 1)]
+    public class CombatActionRangeAttack : CombatActionSO
+    {
+        public ScriptableObjectTransform playerPos;
+        public GameObject projectile;
+        public override void CallAction()
+        {
+            Instantiate(projectile, playerPos.position + playerPos.rotation * Vector3.forward, playerPos.rotation);
+
+        }
+
+    }
+    </code></pre>
+
+    </section>
+
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Brett Bowley</p>
+        </div>
+    </footer>
+</body>
+
+</html>

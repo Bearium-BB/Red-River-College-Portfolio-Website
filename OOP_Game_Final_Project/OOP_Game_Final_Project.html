@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Brett Bowley Portfolio</title>
+    <link rel="stylesheet" href="Style.css">
+    <script type="text/javascript" src="JS.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+
+</head>
+
+<body>
+    <nav>
+        <a href="../Index.html">
+            <div class="circle-wrapper">
+                <div class="circle"></div>
+            </div>
+        </a>
+
+        <img id="logo" src="/Img/logo.svg" />
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>OOP Game Final Project</h1>
+            <p>Scroll Down To See Documentation</p>
+        </div>
+    </section>
+
+    <section class="icon-links">
+        <a href="https://www.youtube.com/watch?v=OtoF6onUFpg&list=PLPyXEPfmGyRqtAQKEHZ7joHmZNzv2jr5j" target="_blank" title="YouTube" id="YouTube">
+            <i class="fab fa-youtube"></i>
+        </a>
+
+        <a href="https://github.com/Bearium-BB/OOP-Game-Final-Project" target="_blank" title="GitHub" id="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+    </section>
+
+    <section class="documentation-content">
+
+        <h2>Introduction</h2>
+
+        <p>This page serves as an overview of the entire codebase, as it would be very difficult to fully explain what the code does through just a website. To address this, I’ve created several videos that go over the majority of the important classes used
+            in the program.</p>
+
+        <p>The only parts not covered in the videos are the Program class and the Helper class. The Program class consists of just two lines of code and is simply responsible for starting the game. The Helper class is used to simplify random number generation
+            in C#.</p>
+
+        <p>If you want a deeper explanation of what each object does and how the code works, please refer to the YouTube link at the top of the code. It’s represented by an icon that takes you to a playlist where all the scripts are explained in detail.</p>
+
+        <h2>IEntity and Connected Classes</h2>
+
+        <p>IEntity is the backbone for any enemies or players in the game, essentially giving all players and enemies the same functions to base themselves off of. You can see the available functions in the code snippet below.</p>
+
+        <p>One of the connected classes is called Entity. It is essentially the base implementation of IEntity and its functions. Most things that are considered enemies in the game will inherit from this class to access the base character functions. This
+            could have been an abstract class, but due to how it was designed three years ago, it wasn't.</p>
+
+        <p>Another class, called Enemy, inherits from Entity and includes a custom variable called dropGold. Despite this addition, it still inherits all the built-in methods from Entity.</p>
+
+        <p>There is also another type of entity connected to Entity called Boss. The Boss class is essentially just a base Entity with no special functionality. The only reason it exists as a separate class is for differentiation—it makes it easier to create
+            a boss that stands apart from a regular enemy. Technically, this separation isn’t necessary unless specific code or behavior needs to be implemented for bosses.
+        </p>
+        <p>Another connected class is Player. The Player class has a bunch of custom methods that aren't inherited from the base Entity class, but it is still considered an entity in the game's architecture.</p>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal interface IEntity
+        {
+            public float GetCurrentHealth();
+            public void OperateCurrentHealth(float D);
+            public Weapon GetWeapon();   
+            public Armour GetArmor();
+            public string GetName();
+            public bool GetIsAlive();
+            public void SetIsAlive(bool B);
+            public object Clone();
+
+        }
+    }
+        </code></pre>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Entity : IEntity
+        {
+            public string Name { get; private set; }
+            public float MaxHealth { get; private set; }
+            public float CurrentHealth { get; private set; }
+            public Dictionary<string, int> Stats { get; private set; }
+            public Weapon Weapon { get; private set; }
+            public Armour Armour { get; private set; }
+            public bool IsAlive { get; private set; }
+
+
+            public Entity(string name, float maxHealth, Weapon weapon, Armour armour,int[] stats)
+            {
+                Name = name;
+                MaxHealth = maxHealth;
+                CurrentHealth = maxHealth;
+                GenerateStatsDictionary();
+                AddStats(stats);
+                Weapon = weapon;
+                Armour = armour;
+                IsAlive = true;
+            }
+
+            public void GenerateStatsDictionary()
+            {
+                Stats = new Dictionary<string, int>();
+                string[] StatsName = "Strength,Dexterity,Intelligence,Wisdom,Constitution,Charisma".Split(",");
+                foreach (string str in StatsName)
+                {
+                    Stats.TryAdd(str, 0);
+                }
+            }
+            public void AddStats(int[] stats)
+            {
+                List<string> Strs = new List<string>();
+                foreach (var item in Stats)
+                {
+                    Strs.Add(item.Key);
+                }
+
+                for (int i = 0; i < stats.Length; i++)
+                {
+                    Stats[Strs[i]] = stats[i];
+                }
+            }
+            public void DoDamage(IEntity E2)
+            {
+                Console.Clear();
+                if (this.GetWeapon().BonusToHit + HelperClass.NumberGenerator(1,20) >= E2.GetArmor().AC)
+                {
+                    float DamageResistant = this.GetWeapon().Damage * E2.GetArmor().Resistance;
+                    E2.OperateCurrentHealth(this.GetWeapon().Damage + AddProficiency(Stats["Strength"]) - DamageResistant);
+                    if (E2 is Enemy)
+                    {
+                        Console.WriteLine($"You hit {E2.GetName()} for {this.GetWeapon().Damage - DamageResistant}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"You get hit {E2.GetName()} for {this.GetWeapon().Damage - DamageResistant}");
+
+                    }
+                }
+                else
+                {
+                    if (E2 is Enemy) {
+                        Console.WriteLine("You miss");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{E2.GetName()} Dodged");
+                    }
+                }
+                CheckedIsAlive(E2);
+            }
+            private void CheckedIsAlive(IEntity E2)
+            {
+                if (E2.GetCurrentHealth() < 0)
+                {
+                    if (E2 is Enemy)
+                    {
+                
+                        Console.WriteLine($"You kill {E2.GetName()}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{E2.GetName()} get kill");
+                    }
+                    E2.SetIsAlive(false);
+                    if (E2 is Enemy)
+                    {
+                        Enemy E = (Enemy)E2;
+                        if (this is Player)
+                        {
+                            Player P = (Player)this;
+                            P.OperateCurrentGold(E.DropGold);
+                            Console.WriteLine($"{E2.GetName()} drop {E.DropGold} gold");
+                            Thread.Sleep(3000);
+                        }
+                    }
+                }
+            }
+            public float GetCurrentHealth()
+            {
+                return CurrentHealth;
+            }
+
+            public Weapon GetWeapon()
+            {
+                return Weapon;
+            }
+            public Armour GetArmor()
+            {
+                return Armour;
+            }
+            public void OperateCurrentHealth(float D)
+            {
+                CurrentHealth -= D;
+            }
+
+            public string GetName()
+            {
+                return Name;
+            }
+            public bool GetIsAlive()
+            {
+                return IsAlive;
+            }
+            public void SetIsAlive(bool B)
+            {
+                IsAlive = B;
+            }
+            public void SetWeapon(Weapon weapon)
+            {
+                Weapon = weapon;
+            }
+
+            public void SetArmour(Armour armour)
+            {
+                Armour = armour;
+            }
+
+            public void Heal()
+            {
+                float MaxHeal = MaxHealth - CurrentHealth;
+                float healed =  HelperClass.NumberGenerator(0, MaxHeal);
+                CurrentHealth += healed;
+                Console.WriteLine($"You healed {healed}");
+                Console.WriteLine($"HP: {CurrentHealth} / {MaxHealth}");
+                Thread.Sleep(3000);
+            }
+
+            public object Clone()
+            {
+                return this.MemberwiseClone();
+            }
+
+            public int AddProficiency(int num)
+            {
+                int number = num / 2;
+                return number;
+            }
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Enemy : Entity
+        {
+            public int DropGold { get; private set; }
+            public Enemy(string name, float maxHealth, Weapon weapon, Armour armour,int[] stats, int dropGold) : base(name, maxHealth, weapon, armour, stats)
+            {
+                DropGold = dropGold;
+            }
+
+
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Boss : Enemy
+        {
+            public Boss(string name, float maxHealth, Weapon weapon, Armour armour, int[] stats, int dropGold) : base(name,maxHealth, weapon, armour, stats, dropGold)
+            {
+
+            }
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Player : Entity
+        {
+            public int Gold { get; private set; }
+            public HashSet<IItem> Inventory { get; private set; }
+
+            public Player(string name, float maxHealth, Weapon weapon, Armour armour, int[] stats,int gold) : base(name,maxHealth,weapon,armour,stats)
+            {
+                Gold = gold;
+                Inventory = new HashSet<IItem>();
+                Inventory.Add(weapon);
+                Inventory.Add(armour);
+            }
+            public void OperateCurrentGold(int G)
+            {
+                Gold += G;
+            }
+
+
+
+            public void Equip(Weapon weapon)
+            {
+                string[] StatsName = "Strength,Dexterity,Intelligence,Wisdom,Constitution,Charisma".Split(",");
+                bool B = true;
+                for (int i = 0; i < Stats.Count; i++)
+                {
+                    //Console.WriteLine($"{Stats[StatsName[i]]} {weapon.MinimumStats[StatsName[i]]} {Stats[StatsName[i]] >= weapon.MinimumStats[StatsName[i]]}");
+                    if (Stats[StatsName[i]] >= weapon.MinimumStats[StatsName[i]])
+                    {
+
+                    }
+                    else
+                    {
+                        B = false;
+                    }
+                }
+                if (B == true)
+                {
+                    Inventory.Add(Weapon);
+                    this.SetWeapon(weapon);
+                    Console.WriteLine($"You equip {weapon.Name}");
+                    Thread.Sleep(2000);
+                }
+                else
+                {
+                    Console.WriteLine("Cant equip your stats are to low");
+                    Thread.Sleep(2000);
+                }
+            }
+
+            public void Equip(Armour armour)
+            {
+                string[] StatsName = "Strength,Dexterity,Intelligence,Wisdom,Constitution,Charisma".Split(",");
+                bool B = true;
+                for (int i = 0; i < Stats.Count; i++)
+                {
+                    if (Stats[StatsName[i]] <= armour.MinimumStats[StatsName[i]])
+                    {
+                        B = false;
+
+                    }
+                }
+                if (B = true)
+                {
+                    Inventory.Add(Armour);
+                    this.SetArmour(armour);
+                    Console.WriteLine($"You equip {armour.Name}");
+                    Thread.Sleep(2000);
+                }
+                else
+                {
+                    Console.WriteLine("Cant equip your stats are to low");
+                }
+            }
+
+            public List<IItem> GetAllWeaponInInventory()
+            {
+                List<IItem> listTItem = new List<IItem>();
+                foreach(IItem inv in Inventory)
+                {
+                    if (inv is Weapon)
+                    {
+                        listTItem.Add(inv);
+                    }
+                }
+                return listTItem;
+            }
+
+            public List<IItem> GetAllArmourInInventory()
+            {
+                List<IItem> listTItem = new List<IItem>();
+                foreach (IItem inv in Inventory)
+                {
+                    if (inv is Armour)
+                    {
+                        listTItem.Add(inv);
+                    }
+                }
+                return listTItem;
+            }
+
+            public void AddToInventory(IItem item)
+            {
+                Inventory.Add(item);
+            }
+
+            public void AddToInventory(List<IItem> items)
+            {
+                foreach (IItem item in items)
+                {
+                    Inventory.Add(item);
+                }
+            }
+
+            public void PlayerStats()
+            {
+                Console.Clear();
+                StringBuilder SB = new StringBuilder();
+                SB.AppendLine($"Name: {Name}");
+                SB.AppendLine($"HP: {CurrentHealth} / {MaxHealth}");
+                SB.AppendLine($"Equip Weapon: {Weapon.Name}");
+                SB.AppendLine($"Equip Armour: {Armour.Name}");
+                SB.AppendLine($"Gold: {Gold}");
+                foreach (KeyValuePair<string,int> kvp in Stats)
+                {
+                    SB.AppendLine($"{kvp.Key}: {kvp.Value}");
+                }
+                SB.AppendLine("Press any key to go back");
+                Console.WriteLine(SB);
+                Console.ReadKey(true);
+            }
+
+        }
+    }
+        </code></pre>
+
+        <h2>IItem and Connected Classes</h2>
+
+        <p>This follows the same framework as IEntity. IItem is the backbone of all items in the game, containing just a couple of base functions for items to build off of. The Item class is the implementation of these functions, with a few additional methods
+            included.
+        </p>
+
+        <p>Other connected classes are Armor and Weapon. Armor has properties for resistance and AC. If you've ever played D&amp;D, it follows similar rules: AC determines how hard it is to hit, while resistance is a percentage amount of damage that the
+            wearer cannot take. Weapon has bonuses to both hit and damage.</p>
+
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal interface IItem
+        {
+            public string GetName();
+
+            public object Clone();
+
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Item : IItem
+        {
+            public string Name { get; private set; }    
+            public int Id { get; private set; }
+            public Dictionary<string, int> MinimumStats { get; private set; }
+            public int BuyItem { get; private set; }
+
+            public Item(string name , int id, int[] stats, int buyItem)
+            {
+                Name = name;
+                Id = id;
+                GenerateStatsDictionary();
+                AddStats(stats);
+                BuyItem = buyItem;
+            }
+
+            public void GenerateStatsDictionary()
+            {
+                MinimumStats = new Dictionary<string, int>();
+                string[] StatsName = "Strength,Dexterity,Intelligence,Wisdom,Constitution,Charisma".Split(",");
+                foreach (string str in StatsName)
+                {
+                    MinimumStats.TryAdd(str, 0);
+                }
+            }
+            public void AddStats(int[] stats)
+            {
+                List<string> Strs = new List<string>();
+                foreach (var item in MinimumStats)
+                {
+                    Strs.Add(item.Key);
+                }
+
+                for (int i = 0; i < stats.Length; i++)
+                {
+                    MinimumStats[Strs[i]] = stats[i];
+                }
+            }
+            public string GetName()
+            {
+                return Name;
+            }
+
+            public object Clone()
+            {
+                return this.MemberwiseClone();
+            }
+
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+    using static System.Net.Mime.MediaTypeNames;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Armour : Item
+        {
+            public float Resistance { get; private set; }
+            public float AC { get; private set; }
+            public Armour(string name, int id, float resistance, float aC, int[] stats, int buyItem) : base(name, id, stats, buyItem)
+            {
+                Resistance = resistance;
+                AC = aC;
+            }
+        }
+    }
+        </code></pre>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Weapon : Item
+        {
+            public float Damage { get; private set; }
+            public int BonusToHit { get; private set; }
+
+
+            public Weapon(string name, int id, float damage, int[] stats,int buyItem) : base(name, id, stats, buyItem)
+            {
+                Damage = damage;
+            }
+        }
+    }
+        </code></pre>
+
+        <h2>Menu</h2>
+
+        <p>This class is a way to make a dynamic menu system inside of a console app. It has many methods for different classes or interfaces to display as a menu, allowing users to select options and execute custom methods from there. This was invented
+            to avoid having a bunch of repeated code everywhere just for making a simple menu.</p>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Xml.Linq;
+    using static System.Console;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Menu
+        {
+            public string Name { get; set; }
+            private List<string> Options;
+            private string Prompt;
+            private int selectOption;
+            private List<PlayerClass> ListPlayerClass;
+            public Menu(string name, string prompt, List<string> str)
+            {
+                Name = name;
+                Options = str;
+                Prompt = prompt;
+
+            }
+
+            public Menu(string name, string prompt, List<PlayerClass> listPlayerClass)
+            {
+                Name = name;
+                Prompt = prompt;
+                ListPlayerClass = listPlayerClass;
+            }
+            public Menu(string name, string prompt)
+            {
+                Name = name;
+                Prompt = prompt;
+            }
+
+            public void DisplayOptions()
+            {
+                WriteLine(Prompt);
+
+                for (int i = 0; i < Options.Count; i++)
+                {
+                    string option = Options[i];
+                    if (i == selectOption)
+                    {
+                        Write($"{i + 1}: {option}",BackgroundColor = ConsoleColor.Magenta);
+                        ResetColor();
+                        WriteLine();
+
+                    }
+                    else
+                    {
+                        WriteLine($"{i + 1}: {option}");
+
+                    }
+
+
+                }
+            }
+
+            public int RunMenu()
+            {
+                selectOption = 0;
+                ConsoleKeyInfo temp;
+                do
+                {
+                    Clear();
+                    DisplayOptions();
+
+                    temp = ReadKey(true);
+                    if (temp.Key == ConsoleKey.UpArrow)
+                    {
+                        selectOption--;
+                    }
+                    else if (temp.Key == ConsoleKey.DownArrow)
+                    {
+                        selectOption++;
+                    }
+                    InIndex();
+
+                } while (temp.Key != ConsoleKey.Enter);
+                return selectOption;
+            }
+
+            private void InIndex()
+            {
+                if (selectOption > Options.Count - 1)
+                {
+                    selectOption = 0;
+                }
+                else if (selectOption < 0)
+                {
+                    selectOption = Options.Count - 1;
+                }
+            }
+
+            private void InIndex(List<PlayerClass> LPC)
+            {
+                if (selectOption > LPC.Count - 1)
+                {
+                    selectOption = 0;
+                }
+                else if (selectOption < 0)
+                {
+                    selectOption = LPC.Count - 1;
+                }
+            }
+
+            public void DynamicMenu(List<PlayerClass> LPC)
+            {
+
+                WriteLine(Prompt);
+
+                for (int i = 0; i < LPC.Count; i++)
+                {
+                    if (i == selectOption)
+                    {
+                        Write($"{i + 1}: {LPC[i].Name}", BackgroundColor = ConsoleColor.Magenta);
+                        ResetColor();
+                        WriteLine();
+
+                    }
+                    else
+                    {
+                        WriteLine($"{i + 1}: {LPC[i].Name}");
+
+                    }
+
+
+                }
+
+            }
+            public PlayerClass RunDynamicMenu()
+            {
+                selectOption = 0;
+                ConsoleKeyInfo temp;
+                do
+                {
+                    Clear();
+                    DynamicMenu(ListPlayerClass);
+
+                    temp = ReadKey(true);
+                    if (temp.Key == ConsoleKey.UpArrow)
+                    {
+                        selectOption--;
+                    }
+                    else if (temp.Key == ConsoleKey.DownArrow)
+                    {
+                        selectOption++;
+                    }
+                    InIndex(ListPlayerClass);
+
+                } while (temp.Key != ConsoleKey.Enter);
+                return ListPlayerClass[selectOption];
+            }
+
+
+
+
+
+
+
+            private void InIndex(List<IEntity> LE)
+            {
+                if (selectOption > LE.Count - 1)
+                {
+                    selectOption = 0;
+                }
+                else if (selectOption < 0)
+                {
+                    selectOption = LE.Count - 1;
+                }
+            }
+
+            public void DynamicMenu(List<IEntity> LE)
+            {
+
+                WriteLine(Prompt);
+
+                for (int i = 0; i < LE.Count; i++)
+                {
+                    if (i == selectOption)
+                    {
+                        BackgroundColor = ConsoleColor.Magenta;
+                    }
+
+                    Write($"{i + 1}: {LE[i].GetName()}");
+                    ResetColor();
+                    WriteLine();
+
+                }
+
+            }
+            public IEntity RunDynamicMenu(List<IEntity> ListTEntity)
+            {
+                selectOption = 0;
+                ConsoleKeyInfo temp;
+                do
+                {
+                    Clear();
+                    DynamicMenu(ListTEntity);
+
+                    temp = ReadKey(true);
+                    if (temp.Key == ConsoleKey.UpArrow)
+                    {
+                        selectOption--;
+                    }
+                    else if (temp.Key == ConsoleKey.DownArrow)
+                    {
+                        selectOption++;
+                    }
+                    InIndex(ListTEntity);
+
+                } while (temp.Key != ConsoleKey.Enter);
+
+                return ListTEntity[selectOption];
+            }
+
+            private void InIndex(List<Player> LE)
+            {
+                if (selectOption > LE.Count - 1)
+                {
+                    selectOption = 0;
+                }
+                else if (selectOption < 0)
+                {
+                    selectOption = LE.Count - 1;
+                }
+            }
+
+            public void DynamicMenu(List<Player> LE)
+            {
+
+                WriteLine(Prompt);
+
+                for (int i = 0; i < LE.Count; i++)
+                {
+                    if (i == selectOption)
+                    {
+                        BackgroundColor = ConsoleColor.Magenta;
+                    }
+
+                    Write($"{i + 1}: {LE[i].GetName()}");
+                    ResetColor();
+                    WriteLine();
+
+                }
+
+            }
+            public Player RunDynamicMenu(List<Player> ListPlayer)
+            {
+                selectOption = 0;
+                ConsoleKeyInfo temp;
+                do
+                {
+                    Clear();
+                    DynamicMenu(ListPlayer);
+
+                    temp = ReadKey(true);
+                    if (temp.Key == ConsoleKey.UpArrow)
+                    {
+                        selectOption--;
+                    }
+                    else if (temp.Key == ConsoleKey.DownArrow)
+                    {
+                        selectOption++;
+                    }
+                    InIndex(ListPlayer);
+
+                } while (temp.Key != ConsoleKey.Enter);
+
+                return ListPlayer[selectOption];
+            }
+
+            private void InIndex(List<IItem> LI)
+            {
+                if (selectOption > LI.Count - 1)
+                {
+                    selectOption = 0;
+                }
+                else if (selectOption < 0)
+                {
+                    selectOption = LI.Count - 1;
+                }
+            }
+
+            public void DynamicMenu(List<IItem> LI)
+            {
+
+                WriteLine(Prompt);
+
+                for (int i = 0; i < LI.Count; i++)
+                {
+                    if (i == selectOption)
+                    {
+                        BackgroundColor = ConsoleColor.Magenta;
+                    }
+
+                    Write($"{i + 1}: {LI[i].GetName()}");
+                    ResetColor();
+                    WriteLine();
+
+                }
+
+            }
+
+            public IItem RunDynamicMenu(List<IItem> ListTItem)
+            {
+                selectOption = 0;
+                ConsoleKeyInfo temp;
+                do
+                {
+                    Clear();
+                    DynamicMenu(ListTItem);
+
+                    temp = ReadKey(true);
+                    if (temp.Key == ConsoleKey.UpArrow)
+                    {
+                        selectOption--;
+                    }
+                    else if (temp.Key == ConsoleKey.DownArrow)
+                    {
+                        selectOption++;
+                    }
+                    InIndex(ListTItem);
+
+                } while (temp.Key != ConsoleKey.Enter);
+                return ListTItem[selectOption];
+            }
+
+        }
+    }
+        </code></pre>
+
+
+
+        <h2>MasterGameObject</h2>
+
+        <p>The MasterGameObject is a game object that stores all the data of the game. This includes weapons, menus, bosses, player classes—pretty much anything that needs to exist when the program starts or that needs to be generated and accessed later.
+            This class holds all of that data.</p>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class MasterGameObject
+        {
+            public List<IItem> MetaDataItem { get; private set; }
+            public List<IEntity> MetaDataTEntity { get; private set; }
+
+            public List<Boss> MetaDataBoss { get; private set; }
+
+            public List<PlayerClass> MetaDataPlayerClass { get; private set; }
+            public List&lt;Menu&gt; Menus { get; private set; }
+
+            public MasterGameObject()
+            {
+                MetaDataItem = new List<IItem>();
+                MetaDataTEntity = new List<IEntity>();
+                MetaDataPlayerClass = new List<PlayerClass>();
+                MetaDataBoss = new List<Boss>();
+                Menus = new List&lt;Menu&gt;();
+                MakeAllMetaData();
+            }
+            enum NameAndId
+            {
+                Sword=1,
+                Longsword=2,
+                Battle_axe=7,
+                Heavy_plated_armour=3,
+                Light_armour=4,
+                Chainmail=5,
+                Cloth_armour=6
+            }
+
+
+
+            public void MakeAllMetaData()
+            {
+
+                MetaDataItem.Add(new Weapon("Sword", 1, 25, new int[] { 10, 10, 10, 10, 10, 7 }, 200));
+                MetaDataItem.Add(new Weapon("Longsword", 2, 25, new int[] { 15, 13, 10, 10, 12, 7 }, 500));
+                MetaDataItem.Add(new Weapon("Battle axe", 7, 35, new int[] { 17, 10, 10, 10, 12, 7 },750));
+                MetaDataItem.Add(new Weapon("Canoe", 8, 35, new int[] { 20, 10, 10, 10, 12, 7 }, 750));
+
+
+                MetaDataItem.Add(new Armour("Heavy plated armour", 3, 0.35f, 15, new int[] { 15, 13, 10, 10, 12, 7 },1000)); 
+                MetaDataItem.Add(new Armour("Light armour", 4, 0.1f, 10, new int[] { 12, 10, 10, 10, 10, 7 },500));
+                MetaDataItem.Add(new Armour("Chainmail", 5, 0.20f, 12, new int[] { 10, 10, 10, 10, 10, 7 },750));
+                MetaDataItem.Add(new Armour("Cloth armour", 6, 0.05f, 8,new int[] { 5, 5, 5, 5, 5, 5 },100));
+
+
+                //Strength,Dexterity,Intelligence,Wisdom,Constitution,Charisma
+
+                MetaDataPlayerClass.Add(new PlayerClass("Figter", new int[] { 15, 13, 10, 10, 12, 7 }, GetArmourByName("Heavy plated armour"), GetWeaponByName("Longsword"), 1000, 45.0f));
+
+                MetaDataPlayerClass.Add(new PlayerClass("Barbarian", new int[] { 17, 10, 10, 10, 12, 7 }, GetArmourByName("Light armour"), GetWeaponByName("Sword"), 1000, 70.0f));
+
+                MetaDataPlayerClass.Add(new PlayerClass("Voyager", new int[] { 20, 10, 10, 10, 12, 7 }, GetArmourByName("Chainmail"), GetWeaponByName("Canoe"), 1000, 20.0f));
+
+
+                MetaDataTEntity.Add(new Enemy("Orc", 50.0f, GetWeaponByName("Battle axe"), GetArmourByName("Chainmail"), new int[] { 20, 10, 10, 10, 13, 7 }, 50));
+                MetaDataTEntity.Add(new Enemy("Skeleton", 10.0f, GetWeaponByName("Sword"), GetArmourByName("Cloth armour"), new int[] { 20, 10, 10, 10, 13, 7 }, 50));
+                MetaDataTEntity.Add(new Enemy("Zombie", 15.0f, GetWeaponByName("Sword"), GetArmourByName("Cloth armour"), new int[] { 20, 10, 10, 10, 13, 7 }, 50));
+                MetaDataTEntity.Add(new Enemy("Wolf", 40.0f,GetWeaponByName("Sword"), GetArmourByName("Cloth armour"), new int[] { 20, 10, 10, 10, 13, 7 }, 50));
+                MetaDataBoss.Add(new Boss("Mr.Peers", 100.0f, new Weapon("God sword", 2, 120, new int[] { 15, 13, 10, 10, 12, 7 }, 10000000), new Armour("God armourer", 20, 0.95f, 15, new int[] { 15, 13, 10, 10, 12, 7 },10000000), new int[] { 99, 99, 99, 99, 99, 99 }, 50));
+                Menus.Add(new Menu("Start menu", @"                                           
+                                            :!?!?Y5JJYPPJ!Y#&&P:                                     
+                                            ~&@@@@@@@@@@@@@@@@@@Y                                     
+                                            7@@@@@@@@@@@@@@@@@@P.                                     
+                                            ^@@@@@@@@@@@@@@@@@@P                                      
+                                            5@@@@@@@@@@@@@@@@@@@?                                     
+                                            ~@@@@@@@@@@@@@@@@@@@@@5                                    
+                                            .#@@@@@@@@@@@@@@@@@@@@@@7                                   
+                                            !@@@@@@@@@@@@@@@@@@@@@@@G        .                          
+                                            ?@@@@@@@@@@@@@@@@@@@@@@@#.     ~B###5?^                     
+                                            5@@@@@@@@@@@@@@@@@@@@@@@@7    ^@@@@@@@@Y.                   
+                                        ~#@@@@@@@@@@@@@@@@@@@@@@@@&J.  ?@@@@@@@@@Y                   
+                                        .?B@@@@@@@@@@@@@@@@@@@@@@@@@@@@&Y5@@@@@@@@@@5                   
+                            .       !B@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&^                   
+                        :?P##B5?!^^P@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@J.                    
+                        ~P&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@J                      
+                        ?@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@B~                       
+                    ~@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@5.                        
+                    Y@@@@&&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@7                          
+                    :!~7~:.~7?P&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&GPPGP!                           
+                                :~5&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@J                                 
+                                    :?GGBPB@@@@@@@@@@@@@@@@@@@@@@@@@@~                                 
+                                        !@@@@@@@@@@@@@@@@@@@@@@@@@@~                                 
+                                        .#@@@@@@@@@@@@@@@@@@@@@@@@&:                                 
+                                            Y@@@@@@@@@@@@@@@@@@@@@@@@5                                  
+                                            !@@@@@@@@@@@@@@@@@@@@@@@@P                                  
+                                            7@@@@@@@@@@@@@@@@@@@@@@@@@J                                 
+                                        ^#@@@@@@@@@@@@@@@@@@@@@@@@@@~                                
+                                        .G@@@@@@@@@@@@@@@@@@@@@@@@@@@B                                
+                                        Y@@@@@@@@@@@@@@@@@@@@@@@@@@@@@^                               
+                                        :&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@?                               
+                                        ~@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@Y                               
+                                        5@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@P                               
+                                        B@@@@@@@@@@@@@@&PB@@@@@@@@@@@@@@~                              
+                                        :&@@@@@@@@@@@&P!.  ^5@@@@@@@@@@@@!                              
+                                        .#@@@@@@@@@@J.       ^5@@@@@@@@@@^                              
+                                        P@@@@@@@@@Y           Y@@@@@@@@@~                              
+                                        Y@@@@@@@@@5           !@@@@@@@@@P                              
+                                        7&@@@@@@@@@G           ^@@@@@@@@@@J                             
+                                    :G@@@@@@@@@@@J            P@@@@@@@@@@7                            
+                                    ^#&&&&&####B5.            .?Y5YJJJJ?!. 
+
+
+    _______ _            ____                     _____                         _____                    _______                  _             _ 
+    |__   __| |          |  _ \                   / ____|                       / ____|                  |__   __|                (_)           | |
+        | |  | |__   ___  | |_) | ___  __ _ _ __  | |  __  __ _ _ __ ___   ___  | |  __  ___  _ __   ___     | | ___ _ __ _ __ ___  _ _ __   __ _| |
+        | |  | '_ \ / _ \ |  _ < / _ \/ _` | '__| | | |_ |/ _` | '_ ` _ \ / _ \ | | |_ |/ _ \| '_ \ / _ \    | |/ _ \ '__| '_ ` _ \| | '_ \ / _` | |
+        | |  | | | |  __/ | |_) |  __/ (_| | |    | |__| | (_| | | | | | |  __/ | |__| | (_) | | | |  __/    | |  __/ |  | | | | | | | | | | (_| | |
+        |_|  |_| |_|\___| |____/ \___|\__,_|_|     \_____|\__,_|_| |_| |_|\___|  \_____|\___/|_| |_|\___|    |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|_|                                                                                                                       
+                ", new List<string> { "Start new game"}));
+
+                Menus.Add(new Menu("Make party", "How many players", new List<string> { "1", "2", "3", "4" }));
+
+                Menus.Add(new Menu("Selective class", "Selective starting class", MetaDataPlayerClass));
+
+                Menus.Add(new Menu("Fight menu", "Choose An Option", new List<string> { "Attack enemy", "Check inventory", "Equip gear", "Heal","See stats" }));
+                Menus.Add(new Menu("Equipping", "Choose An Option", new List<string> { "Equip Armour", "Equip Weapon","Back"}));
+                Menus.Add(new Menu("Select enemy", "Select enemy"));
+                Menus.Add(new Menu("Show Inventory", "Inventory"));
+                Menus.Add(new Menu("Equipping W or A", "Choose An Item"));
+                Menus.Add(new Menu("In-game menu", "Choose An Option", new List<string> { "Player Menu","Back to map","Go to main menu"}));
+                Menus.Add(new Menu("Select a player", "Select a player"));
+                Menus.Add(new Menu("Player menu", "Choose An Option", new List<string> { "Check inventory", "Equip gear", "See stats","Back" }));
+
+
+
+
+            }
+
+            public Menu GetMenuByName(string nameOfTheMenu)
+            {
+                foreach (Menu M in Menus)
+                {
+                    if (M.Name == nameOfTheMenu)
+                    {
+                        return M;
+                    }
+                }
+                return null;
+            }
+
+            public Weapon GetWeaponByName(string nameOfTheWeapon)
+            {
+                foreach (IItem I in MetaDataItem)
+                {
+                    if (I.GetName() == nameOfTheWeapon && I is Weapon)
+                    {
+                        Weapon weapon = (Weapon)I;
+                        return weapon;
+                    }
+                }
+                return null;
+            }
+
+            public Armour GetArmourByName(string nameOfTheArmour)
+            {
+                foreach (IItem I in MetaDataItem)
+                {
+                    if (I.GetName() == nameOfTheArmour && I is Armour)
+                    {
+                        Armour armour = (Armour)I;
+                        return armour;
+                    }
+                }
+                return null;
+            }
+
+            public Boss GetABoss()
+            {
+            return MetaDataBoss[HelperClass.NumberGenerator(0,MetaDataBoss.Count-1)];
+            }
+            public List<IEntity> GetSomeTEntity(int howManyEntity)
+            {
+
+                List<IEntity> listShuffle = Shuffle(MetaDataTEntity);
+                List<IEntity> List = new List<IEntity>();
+                for (int i = 0; i < howManyEntity;i++ )
+                {
+                    List.Add((IEntity)listShuffle[i].Clone());
+                }
+                return List;
+            }
+
+            public List<IItem> GetSomeTItem(int howManyEntity)
+            {
+
+                List<IItem> listShuffle = Shuffle(MetaDataItem);
+                List<IItem> List = new List<IItem>();
+                for (int i = 0; i < howManyEntity; i++)
+                {
+                    List.Add((IItem)listShuffle[i].Clone());
+                }
+                return List;
+            }
+
+            //https://www.dotnetperls.com/fisher-yates-shuffle
+            public List<IEntity> Shuffle(List<IEntity> deck)
+            {
+                Random r = new Random();
+                List<IEntity> list = new List<IEntity>(deck);
+                for (int n = list.Count - 1; n > 0; --n)
+                {
+                    int k = r.Next(n + 1);
+                    IEntity temp = deck[n];
+                    deck[n] = deck[k];
+                    deck[k] = temp;
+
+                }
+                return list;
+            }
+
+            //https://www.dotnetperls.com/fisher-yates-shuffle
+            public List<IItem> Shuffle(List<IItem> deck)
+            {
+                Random r = new Random();
+                List<IItem> list = new List<IItem>(deck);
+                for (int n = list.Count - 1; n > 0; --n)
+                {
+                    int k = r.Next(n + 1);
+                    IItem temp = deck[n];
+                    deck[n] = deck[k];
+                    deck[k] = temp;
+
+                }
+                return list;
+            }                
+
+            public void SeeId()
+            {
+                string[] names = Enum.GetNames(typeof(NameAndId));
+                List<int> ints = new List<int>();
+                foreach (int name in Enum.GetValues(typeof(NameAndId))){
+                    ints.Add(name);
+                }
+
+                for(int i = 0; i < names.Length; ++i)
+                {
+                    Console.WriteLine($"name: {names[i]} id: {ints[i]}");
+                }   
+
+            }
+        }
+    }
+        </code></pre>
+
+        <h2>Party</h2>
+
+        <p>This class Party, has a position and a player list. The reason it has a player list is that multiple players can play the game at once. The position represents the entire party’s location on the map. Since all the players must stick together as
+            one party, there can only ever be one position for the entire group.</p>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Party
+        {
+            public KeyValuePair<int, int> Position { get; set; }
+            public List<Player> Players { get; private set; }
+            public Party()
+            {
+                Players = new List<Player>();
+            }
+            public void AddToPlayers(Player P)
+            {
+                Players.Add(P);
+            }
+        }
+    }
+        </code></pre>
+        <h2>Room</h2>
+
+        <p>The Room class is a helper class for the Map class. It essentially stores a bunch of data that the map can call upon when needed. The type of the room defines what kind it is and whether it is walkable—that is, if you can walk on it. The enemy
+            list stores all the enemies in the room, and the items list stores all the items in the room. Of course, there are several functions for adding data and a function to describe the room, which describes the enemies inside it.</p>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Room
+        {
+            public string Type { get; set; }
+            public string IsWalkable { get; set; }
+            public List<IEntity> EnemyList { get; set; }
+            public List<IItem> Items { get; set; }
+            public Room(string isWalkable, string type = "Space")
+            {
+                IsWalkable = isWalkable;
+                EnemyList = new List<IEntity>();
+                Items =  new List<IItem>();
+                Type = type;
+            }
+
+            public void DescriptionOfRoom()
+            {
+                foreach (Enemy e in EnemyList)
+                {
+                    Console.WriteLine($"{e.Name}");
+                }
+                Console.WriteLine(EnemyList.Count);
+
+            }
+
+            public void AddEnemy(IEntity  E)
+            {
+                EnemyList.Add(E);
+            }
+            public void AddEnemy(List<IEntity> LE)
+            {
+                foreach(IEntity E in LE)
+                {
+                    EnemyList.Add(E);
+                }
+            }
+
+            public void AddItems(IItem I)
+            {
+                Items.Add(I);
+            }
+            public void AddItems(List<IItem> LI)
+            {
+                foreach (IItem I in LI)
+                {
+                    Items.Add(I);
+                }
+            }
+        }
+    }
+        </code></pre>
+        <h2>Map</h2>
+
+        <p>The Map class handles many important tasks. It generates the rooms, creates the overall map, and places enemies within the rooms. It also has a print method and allows the party to move within the map by maintaining a party object. The map has
+            access to the MasterGameObject to populate data as needed.</p>
+
+        <p>Additionally, the map determines what happens when the party enters a new tile. This could trigger a fight with an enemy, lead to discovering a shop, or even start a boss battle. This class is also responsible for generating fights (which we’ll
+            discuss more in the fight class later) and for managing loot giving.</p>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Map
+        {
+            public List<List<Room>> DisplayMap { get; set; }
+            private List<List<Room>> MovementMap { get; set; }
+            private List<List<Room>> InformationalMap { get; set; }
+            public Party Party;
+            public MasterGameObject MasterGameObject = new MasterGameObject();
+
+
+            public Map(int sizeForMap, Party party)
+            {
+                DisplayMap = new List<List<Room>>();
+                DisplayMap = GenerateMaps(sizeForMap);
+                Party = party;
+                MovementMap = new List<List<Room>>();
+                InformationalMap = new List<List<Room>>();
+                RegeneratePlayableArea();
+                PopulateRoom();
+
+            }
+            public void PopulateRoom()
+            {
+                foreach (var listRoom in InformationalMap)
+                {
+                    foreach (var Room in listRoom)
+                    {
+                        if (Room.IsWalkable == "|")
+                        {
+                            int num = HelperClass.NumberGenerator(1, 100);
+                            if (num > 75)
+                            {
+                                Room.AddEnemy(MasterGameObject.GetSomeTEntity(HelperClass.NumberGenerator(1,3)));
+                                Room.AddItems(MasterGameObject.GetSomeTItem(HelperClass.NumberGenerator(1, 2)));
+                            }
+                        } 
+                        if (Room.IsWalkable == "B")
+                        {
+                            Room.AddEnemy(MasterGameObject.GetSomeTEntity(HelperClass.NumberGenerator(1, 3)));
+                            Room.AddEnemy(MasterGameObject.GetABoss());
+                            Room.AddItems(MasterGameObject.GetSomeTItem(HelperClass.NumberGenerator(2, 4)));
+                        }
+                        if (Room.IsWalkable == "L")
+                        {
+                            Room.AddItems(MasterGameObject.GetSomeTItem(HelperClass.NumberGenerator(2, 4)));
+                        }
+                        if (Room.IsWalkable == "S")
+                        {
+                            Room.AddItems(MasterGameObject.GetSomeTItem(HelperClass.NumberGenerator(2, 4)));
+                        }
+                    }
+                }
+            }
+            private List<List<Room>> GenerateMaps(int sizeForMap)
+            {
+                List<List<Room>> row = new List<List<Room>>();
+                for (int i = 0; i < sizeForMap; i++)
+                {
+                    row.Add(new List<Room>());
+                    for (int j = 0; j < sizeForMap; j++)
+                    {
+                        row[i].Add(new Room("*"));
+                    }
+                }
+                return row;
+            }
+        
+
+            public void PrintMap()
+            {
+                for (int i = 0; i < DisplayMap.Count; i++)
+                {
+
+                    for (int j = 0; j < DisplayMap.Count; j++)
+                    {
+                        string IW = DisplayMap[i][j].IsWalkable;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        if (IW == "*")
+                        {
+                            Console.BackgroundColor = ConsoleColor.Blue;
+                        }
+                        else if (IW == "P")
+                        {
+                            Console.BackgroundColor = ConsoleColor.DarkBlue;
+                        }
+                        else
+                        {
+                            Console.BackgroundColor = ConsoleColor.Cyan;
+                        }
+                        Console.Write($" {IW} ");
+                        Console.ResetColor();
+                    }
+                    Console.WriteLine();
+                }
+
+            }
+            public KeyValuePair<int, int> MoveDown(KeyValuePair<int, int> Position)
+            {
+                if (Position.Key + 1 >= 0 && Position.Key + 1 < MovementMap.Count)
+                {
+                    if (MovementMap[Position.Key + 1][Position.Value].IsWalkable == "|")
+                    {
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = InformationalMap[Position.Key][Position.Value].IsWalkable;
+                        Position = new KeyValuePair<int, int>(Position.Key + 1, Position.Value);
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = "P";
+                        return Position;
+                    }
+                    
+                }
+                return Position;
+            }
+
+            public KeyValuePair<int, int> MoveUp(KeyValuePair<int, int> Position)
+            {
+                if (Position.Key - 1 >= 0 && Position.Key - 1 < MovementMap.Count)
+                {
+                    if (MovementMap[Position.Key - 1][Position.Value].IsWalkable == "|")
+                    {
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = InformationalMap[Position.Key][Position.Value].IsWalkable;
+                        Position = new KeyValuePair<int, int>(Position.Key - 1, Position.Value);
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = "P";
+                        return Position;
+                    }
+                }
+                return Position;
+            }
+
+            public KeyValuePair<int, int> MoveRight(KeyValuePair<int, int> Position)
+            {
+                if (Position.Value + 1 >= 0 && Position.Value + 1 < MovementMap.Count)
+                {
+                    if (MovementMap[Position.Key][Position.Value + 1].IsWalkable == "|")
+                    {
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = InformationalMap[Position.Key][Position.Value].IsWalkable;
+                        Position = new KeyValuePair<int, int>(Position.Key, Position.Value + 1);
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = "P";
+                        return Position;
+                    }
+                }
+                return Position;
+            }
+            public KeyValuePair<int, int> MoveLeft(KeyValuePair<int, int> Position)
+            {
+                if (Position.Value - 1 >= 0 && Position.Value - 1 < MovementMap.Count)
+                {
+                    if (MovementMap[Position.Key][Position.Value - 1].IsWalkable == "|")
+                    {
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = InformationalMap[Position.Key][Position.Value].IsWalkable;
+                        Position = new KeyValuePair<int, int>(Position.Key, Position.Value - 1);
+                        DisplayMap[Position.Key][Position.Value].IsWalkable = "P";
+                        return Position;
+                    }
+                }
+                return Position;
+
+            }
+            public ConsoleKeyInfo MovePlayer()
+            {
+                KeyValuePair<int, int> Position = Party.Position;
+                Console.WriteLine($"Arrow keys to move");
+                ConsoleKeyInfo temp = Console.ReadKey(true);
+                switch (temp.Key)
+                {
+                    case ConsoleKey.DownArrow:
+                        Position = MoveDown(Position);
+                        break;
+                    case ConsoleKey.UpArrow:
+                        Position =  MoveUp(Position);
+                        break;
+                    case ConsoleKey.RightArrow:
+                        Position = MoveRight(Position);
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        Position = MoveLeft(Position);
+                        break;
+                    default:
+                        // code block
+                        break;
+                }
+                Party.Position = Position;
+                Console.Clear();
+                WhatToDo(InformationalMap[Position.Key][Position.Value].IsWalkable);
+                return temp;
+
+            }
+            private void RegeneratePlayableArea()
+            {
+                
+                List<KeyValuePair<int, int>> XY = MakeXY().ToList();
+
+                KeyValuePair<int,int> xxyy = MakeXXYY(XY);
+
+                int xx = xxyy.Key;
+                int yy = xxyy.Value;
+                //this makes it so it starts in the centre the three points
+                xx /= 3;
+                yy /= 3;
+                if (xx > DisplayMap.Count-1)
+                {
+                    xx = DisplayMap.Count-1;
+                }
+
+                if (yy > DisplayMap.Count-1)
+                {
+                    yy = DisplayMap.Count-1;
+                }
+
+                Party.Position = new KeyValuePair<int, int>(xx, yy);
+
+                for (int i = 0; i <= 2; i++)
+                {
+
+                    int x = xx;
+                    int y = yy;
+                    //XCR is the current remainder of what it's trying to get to in the x-axis
+                    int XCR = x - XY[i].Key;
+                    //YCR is the current remainder of what it's trying to get to in the x-axis
+                    int YCR = y - XY[i].Value;
+                    while (Math.Abs(XCR) != 0 || Math.Abs(YCR) != 0)
+                    {
+                        //This tells it which direction to go in
+                        if (Math.Abs(XCR) >= Math.Abs(YCR) && Math.Abs(XCR) != 0)
+                        {
+                            if (XCR < 0)
+                            {
+                                x++;
+                                XCR++;
+                            }
+                            else
+                            {
+                                x--;
+                                XCR--;
+
+                            }
+                        }
+                        else if (Math.Abs(YCR) >= Math.Abs(XCR) && Math.Abs(YCR) != 0)
+                        {
+                            if (YCR < 0)
+                            {
+                                y++;
+                                YCR++;
+
+                            }
+                            else
+                            {
+                                y--;
+                                YCR--;
+                            }
+                        }
+                        //This updates displays Maps information in the room
+                        DisplayMap[x][y].IsWalkable = "|";
+                    }
+                }
+
+                //the rest of the function just copies display maps
+                DisplayMap[xx][yy].IsWalkable = "|";
+                CopyMap(MovementMap);
+                //DisplayMap[XY[0].Key][XY[0].Value].IsWalkable = "S";
+                DisplayMap[XY[1].Key][XY[1].Value].IsWalkable = "L";
+                DisplayMap[XY[2].Key][XY[2].Value].IsWalkable = "B";
+                CopyMap(InformationalMap);
+                DisplayMap[xx][yy].IsWalkable = "P";
+            }
+            private void CopyMap(List<List<Room>> map)
+            {
+                for (int i = 0; i < DisplayMap.Count; i++)
+                {
+                    map.Add(new List<Room>());
+                    for (int j = 0; j < DisplayMap.Count; j++)
+                    {
+                        map[i].Add(new Room(DisplayMap[i][j].IsWalkable));
+                    }
+                }
+            }
+
+            private KeyValuePair<int, int> MakeXXYY(List<KeyValuePair<int, int>> XY)
+            {
+
+                int xx = 0;
+                int yy = 0;
+                foreach (var i in XY)
+                {
+                    xx += i.Key;
+                    yy += i.Value;
+                }
+                return new KeyValuePair<int, int>(xx, yy);
+            }
+            private HashSet<KeyValuePair<int, int>> MakeXY()
+            {
+                HashSet<KeyValuePair<int, int>> HashSetXY = new HashSet<KeyValuePair<int, int>>();
+                while (HashSetXY.Count <= 3)
+                {
+                    HashSetXY.Add(new KeyValuePair<int, int>(HelperClass.NumberGenerator(0, DisplayMap.Count-3), HelperClass.NumberGenerator(0, DisplayMap.Count-3)));
+                }
+                return HashSetXY;
+            }
+
+            private void WhatToDo(string str)
+            {
+                switch (str)
+                {
+                    case "|":
+                        IsEnemy();
+                        break;
+                    case "S":
+                        break;
+                    case "B":
+                        IsEnemy();
+                        break;
+                    case "L":
+                        GiveLootInRoom(InformationalMap[Party.Position.Key][Party.Position.Value]);
+                        break;
+                }
+            }
+
+            private void IsEnemy()
+            {
+                List<IEntity> EnemyList = InformationalMap[Party.Position.Key][Party.Position.Value].EnemyList;
+                List<IItem> TItemList = InformationalMap[Party.Position.Key][Party.Position.Value].Items;
+
+                if (EnemyList.Count > 0)
+                {
+                    Fight fight = new Fight(EnemyList, Party, TItemList);
+                    fight.StartFight();
+                }
+            }
+
+            public void BeatBoss()
+            {
+                Room room = null;
+                foreach (var listRoom in InformationalMap)
+                {
+                    foreach (var Room in listRoom)
+                    {
+                        if (Room.IsWalkable == "B")
+                        {
+                            room = Room;
+                        }
+                    }
+                }
+                if (room.EnemyList.Count <= 0)
+                {
+                    int sizeForMap = DisplayMap.Count;
+                    DisplayMap.Clear();
+                    DisplayMap = GenerateMaps(sizeForMap);
+                    MovementMap.Clear();
+                    InformationalMap.Clear();
+                    RegeneratePlayableArea();
+                    PopulateRoom();
+                }
+            }
+            private void GiveLootInRoom(Room room)
+            {
+                Console.Clear();
+
+                foreach (Player player in Party.Players)
+                {
+                    player.AddToInventory(room.Items);
+
+                }
+                room.Items.Clear();
+                Console.WriteLine("The party get some loot. Check your inventory!");
+                Thread.Sleep(3000);
+            }
+
+        }
+    }
+        </code></pre>
+        <h2>Fight</h2>
+
+        <p>This class is used to initiate a fight when a combat scenario is triggered on the map. It gathers all the necessary data from the map and sets up a battle between your party and the enemies originally present in that location. If you win the fight,
+            you receive loot. If you lose, it's game over.</p>
+
+        <p>If a player dies during the fight, they are removed from the party. The turn order follows D&amp;D rules, though in a more simplified form.</p>
+
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Numerics;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class Fight
+        {
+            public List<IEntity> Entities { get; private set; }
+            public List<IItem> Items { get; private set; }
+            public Party Party { get; private set; }
+            private Queue<KeyValuePair<IEntity, int>> EntitiesOfTurn { get;  set; }
+            private List<KeyValuePair<IEntity, int>> Entitiesinitiative { get; set; }
+            private MasterGameObject MasterGameObject = new MasterGameObject(); 
+
+            public Fight(List<IEntity> entities, Party party, List<IItem> items)
+            {
+                Entities = entities;
+                Party = party;
+                EntitiesOfTurn = new Queue<KeyValuePair<IEntity, int>>();
+                Entitiesinitiative = new List<KeyValuePair<IEntity, int>>();
+                TurnForPlayer();
+                Items = items;
+            }
+            public void StartFight()
+            {
+                Console.WriteLine(@"
+    ______       _                    _   ____        _   _   _      
+    |  ____|     | |                  | | |  _ \      | | | | | |     
+    | |__   _ __ | |_ ___ _ __ ___  __| | | |_) | __ _| |_| |_| | ___ 
+    |  __| | '_ \| __/ _ \ '__/ _ \/ _` | |  _ < / _` | __| __| |/ _ \
+    | |____| | | | ||  __/ | |  __/ (_| | | |_) | (_| | |_| |_| |  __/
+    |______|_| |_|\__\___|_|  \___|\__,_| |____/ \__,_|\__|\__|_|\___|
+    ");
+
+                Thread.Sleep(3000);
+
+                do
+                {
+                    if (EntitiesOfTurn.Peek().Key is Player)
+                    {
+                        Player player = (Player)EntitiesOfTurn.Peek().Key;
+                        Console.Clear();
+                        Console.WriteLine($"{player.Name} turn");
+                        Thread.Sleep(1000);
+                        FightMenu(player);
+                    }
+                    else
+                    {
+                        if (EntitiesOfTurn.Peek().Key is Enemy)
+                        {
+                            Enemy enemy = (Enemy)EntitiesOfTurn.Peek().Key;
+                            Console.Clear();
+                            enemy.DoDamage(Party.Players[HelperClass.NumberGenerator(0, Party.Players.Count - 1)]);
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    EntitiesOfTurn.Enqueue(EntitiesOfTurn.Peek());
+                    EntitiesOfTurn.Dequeue();
+                    EntitiesIsAlive();
+                    PlayerDied();
+                } while (PartyIsAlive() && Entities.Count > 0);
+
+                GiveLootInRoom();
+                Console.Clear();
+                Console.WriteLine(@"
+    ____        _   _   _        _    _             ______           _          _ 
+    |  _ \      | | | | | |      | |  | |           |  ____|         | |        | |
+    | |_) | __ _| |_| |_| | ___  | |__| | __ _ ___  | |__   _ __   __| | ___  __| |
+    |  _ < / _` | __| __| |/ _ \ |  __  |/ _` / __| |  __| | '_ \ / _` |/ _ \/ _` |
+    | |_) | (_| | |_| |_| |  __/ | |  | | (_| \__ \ | |____| | | | (_| |  __/ (_| |
+    |____/ \__,_|\__|\__|_|\___| |_|  |_|\__,_|___/ |______|_| |_|\__,_|\___|\__,_|
+    ");
+                Thread.Sleep(3000);
+                Console.Clear();
+
+
+            }
+
+            private void GiveLootInRoom()
+            {
+                Console.Clear();
+                if (PartyIsAlive())
+                {
+                    foreach (Player player in Party.Players)
+                    {
+                        player.AddToInventory(Items);
+                    }
+                    Console.WriteLine("The party get some loot. Check your inventory!");
+                    Thread.Sleep(3000);
+                }
+            }
+
+            private bool PartyIsAlive()
+            {
+                foreach(Player P in Party.Players)
+                {
+                    if (P.IsAlive == true)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            private void PlayerDied()
+            {
+                List<Player> players = Party.Players;
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (players[i].GetCurrentHealth() < 0)
+                    {
+                        for (int j = 0; j < Entitiesinitiative.Count; j++)
+                        {
+                            if (Entitiesinitiative[j].Key == players[i])
+                            {
+                                Entitiesinitiative.Remove(Entitiesinitiative[j]);
+                            }
+                        }
+                        players.Remove(players[i]);
+                        UpdateTurnForPlayer();
+                        Console.WriteLine(Party.Players.Count);
+                        Thread.Sleep(5000);
+                    }
+                }
+            }
+            private void EntitiesIsAlive()
+            {
+                for (int i = 0; i < Entities.Count; i++)
+                {
+                    if (Entities[i].GetCurrentHealth() < 0)
+                    {
+                        for(int j = 0; j < Entitiesinitiative.Count; j++)
+                        {
+                            if (Entitiesinitiative[j].Key == Entities[i])
+                            {
+                                Entitiesinitiative.Remove(Entitiesinitiative[j]);
+                            }
+                        }
+                        Entities.Remove(Entities[i]);
+                        UpdateTurnForPlayer();
+                    }
+                }
+            }
+
+            private void SetPlayI(List<IEntity> E, List<KeyValuePair<IEntity, int>> playerTurn)
+            {
+                foreach (IEntity entity in E)
+                {
+                    playerTurn.Add(new KeyValuePair<IEntity, int>(entity, HelperClass.NumberGenerator(0, 20)));
+                }
+            }
+            private void SetPlayI(Party P, List<KeyValuePair<IEntity, int>> playerTurn)
+            {
+                foreach (IEntity Player in P.Players)
+                {
+                    playerTurn.Add(new KeyValuePair<IEntity, int>(Player, HelperClass.NumberGenerator(0, 20)));
+                }
+            }
+            private void TurnForPlayer()
+            {
+                SetPlayI(Entities, Entitiesinitiative);
+                SetPlayI(Party, Entitiesinitiative);
+                Entitiesinitiative.Sort((x, y) => x.Value.CompareTo(y.Value));
+                Entitiesinitiative.Reverse();
+
+                foreach (var PI in Entitiesinitiative)
+                {
+                    EntitiesOfTurn.Enqueue(PI);
+                }
+            }
+            public void UpdateTurnForPlayer()
+            {
+                EntitiesOfTurn.Clear();
+                foreach (var PI in Entitiesinitiative)
+                {
+                    EntitiesOfTurn.Enqueue(PI);
+                }
+            }
+            private void FightMenu(Player P)
+            {
+                switch (MasterGameObject.GetMenuByName("Fight menu").RunMenu())
+                {
+                    case 0:
+                        P.DoDamage(MasterGameObject.GetMenuByName("Select enemy").RunDynamicMenu(Entities));
+                        Thread.Sleep(1000);
+                        break;
+                    case 1:
+                        MasterGameObject.GetMenuByName("Show Inventory").RunDynamicMenu(P.Inventory.ToList());
+                        FightMenu(P);
+                        break;
+                    case 2:
+                        EquippingMenu(P);
+                        break;
+                    case 3:
+                        P.Heal();
+                        break;
+                    case 4:
+                        P.PlayerStats();
+                        FightMenu(P);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            public void EquippingMenu(Player P)
+            {
+                switch (MasterGameObject.GetMenuByName("Equipping").RunMenu())
+                {
+                    case 0:
+                        P.Equip((Armour)MasterGameObject.GetMenuByName("Equipping W or A").RunDynamicMenu(P.GetAllArmourInInventory()));
+                        FightMenu(P);
+                        break;
+                    case 1:
+                        P.Equip((Weapon)MasterGameObject.GetMenuByName("Equipping W or A").RunDynamicMenu(P.GetAllWeaponInInventory()));
+                        FightMenu(P);
+                        break;
+                    case 2:
+                        FightMenu(P);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }
+    }
+        </code></pre>
+        <h2>GameState</h2>
+
+        <p>The GameState class controls the current state of the game. For the most part, the states include dialogue sequences at the beginning and character creation. This is also where the game object called PlayingGame is created, which is the core object
+            that runs the main gameplay.</p>
+        <pre><code class="language-csharp">
+    using Microsoft.VisualBasic;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class GameState
+        {
+            private MasterGameObject MasterGameObject { get; set; } = new MasterGameObject();
+            public GameState()
+            {
+
+            }
+
+            public void StartGame()
+            {
+                Console.SetWindowSize(175, 40);
+                switch (MasterGameObject.GetMenuByName("Start menu").RunMenu())
+                {
+                    case 0:
+                        GettingPlayGameReady();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            private void Dialogue(List<string[]> strings)
+            {
+                Console.Clear();
+                foreach (string[] strArr in strings)
+                {
+                    foreach (string str in strArr)
+                    {
+                        Console.Write(">");
+                        foreach (char cha in str)
+                        {
+                            Console.Write(cha);
+                            Thread.Sleep(30);
+                        }
+                        Thread.Sleep(3000);
+                        Console.Clear();
+                    }
+                }
+            }
+            private void GettingPlayGameReady()
+            {
+                List<string[]> strings = "A time-travelling cowboy named Mr Coppens. Has travelled back in time to stop the Russian bears from taking over the world. He has the ability to travel back and forth in space at a rate of about one-millionth of an inch per second. The cowboy is currently on the run from those pesky Russians. Mr Copps is the first man to ever be able to time travel and has managed to get himself back to a time before the bears arrived. If Mr Copps can get back before they arrive, he might have a chance of saving the human race. This is a dangerous mission and we need you to go with him.\r\n".Split(".").Chunk(2).ToList();
+                Dialogue(strings);
+                Party P = MakeParty();
+                Console.WriteLine(@"
+    _____ _     _                _           
+    |_   _| |   | |              (_)          
+    | | | |_  | |__   ___  __ _ _ _ __  ___ 
+    | | | __| | '_ \ / _ \/ _` | | '_ \/ __|
+    _| |_| |_  | |_) |  __/ (_| | | | | \__ \
+    |_____|\__| |_.__/ \___|\__, |_|_| |_|___/
+                            __/ |            
+                            |___/  
+                        
+    ");
+                Thread.Sleep(3000);
+                Console.Clear();
+
+                PlayGame PG = new PlayGame(P);
+                PG.StartLoop();
+            }
+            private Party MakeParty()
+            {
+                int totalPlayers = 0;
+                switch (MasterGameObject.GetMenuByName("Make party").RunMenu())
+                {
+                    case 0:
+                        totalPlayers = 1;
+                        break;
+                    case 1:
+                        totalPlayers = 2;
+                        break;
+                    case 2:
+                        totalPlayers = 3;
+                        break;
+                    case 3:
+                        totalPlayers = 4;
+                        break;
+                    default:
+                        break;
+                }
+                return MakingCharacters(totalPlayers);
+            }
+
+            private Party MakingCharacters(int totalPlayers)
+            {
+                Party p = new Party();
+                for (int i = 0; i < totalPlayers; i++)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"Player {i+1} make a character");
+                    Thread.Sleep(3000);
+
+                    PlayerClass PC = MasterGameObject.GetMenuByName($"Selective class").RunDynamicMenu();
+                    Console.Clear();
+
+                    Console.WriteLine("Please enter a name");
+                    string Name = Console.ReadLine();
+                    p.AddToPlayers(new Player(Name, PC.StartingMaxHealth, PC.StartingWeapon, PC.StartingArmour,PC.StartingStats,PC.StartingGold));
+                }
+                return p;
+            }
+
+
+        }
+    }
+        </code></pre>
+        <h2>PlayGame</h2>
+
+        <p>This class contains the main while loop that keeps the game running until the entire party is dead. It stores all the essential information, such as the map, the game state, and the MasterGameObject in case it needs to reference data. It also
+            includes a party object, since the party needs to exist in order for characters to be active in the game.</p>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class PlayGame
+        {
+            private Party Party { get; set; }
+            private Map Map { get; set; }
+            private GameState State { get; set; } = new GameState();
+            private MasterGameObject MasterGameObject { get; set; } = new MasterGameObject();
+
+            public PlayGame(Party party)
+            {
+                Party = party;
+                Map = new Map(40, party);
+            }
+
+            public void StartLoop()
+            {
+                while (PartyIsAlive())
+                {
+                    Map.PrintMap();
+                    Console.WriteLine("press ESC to open the menu");
+                    ConsoleKeyInfo keyInfo = Map.MovePlayer();
+                    if (keyInfo.Key == ConsoleKey.Escape)
+                    {
+                        InGameMenu();
+                    }
+                    Map.BeatBoss();
+
+                }
+                Console.WriteLine(@"
+    _____ _     _                                            _                                       _    __                               
+    |_   _| |   | |                                          | |                                     | |  / _|                              
+    | | | |_  | |__   __ _ ___    ___ ___  _ __ ___   ___  | |_ ___     __ _ _ __     ___ _ __   __| | | |_ ___  _ __   _   _  ___  _   _ 
+    | | | __| | '_ \ / _` / __|  / __/ _ \| '_ ` _ \ / _ \ | __/ _ \   / _` | '_ \   / _ \ '_ \ / _` | |  _/ _ \| '__| | | | |/ _ \| | | |
+    _| |_| |_  | | | | (_| \__ \ | (_| (_) | | | | | |  __/ | || (_) | | (_| | | | | |  __/ | | | (_| | | || (_) | |    | |_| | (_) | |_| |
+    |_____|\__| |_| |_|\__,_|___/  \___\___/|_| |_| |_|\___|  \__\___/   \__,_|_| |_|  \___|_| |_|\__,_| |_| \___/|_|     \__, |\___/ \__,_|
+                                                                                                                            __/ |            
+                                                                                                                        |___/             
+    ");
+                Thread.Sleep(5000);
+                State.StartGame();
+            }
+
+            private bool PartyIsAlive()
+            {
+                foreach (Player P in Party.Players)
+                {
+                    if (P.IsAlive == true)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            private void InGameMenu()
+            {
+                switch(MasterGameObject.GetMenuByName("In-game menu").RunMenu())
+                {
+                    case 0:
+                        PlayerMenu(MasterGameObject.GetMenuByName("Select a player").RunDynamicMenu(Party.Players));
+                        break;
+                    case 1:
+                        break;
+                    case 2:
+                        State.StartGame();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            private void PlayerMenu(Player P)
+            {
+                switch (MasterGameObject.GetMenuByName("Player menu").RunMenu())
+                {
+                    case 0:
+                        MasterGameObject.GetMenuByName("Show Inventory").RunDynamicMenu(P.Inventory.ToList());
+                        PlayerMenu(P);
+                        break;
+                    case 1:
+                        EquippingMenu(P);
+                        break;
+                    case 2:
+                        P.PlayerStats();
+                        PlayerMenu(P);
+                        break;
+                    case 3:
+                        InGameMenu();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            public void EquippingMenu(Player P)
+            {
+                switch (MasterGameObject.GetMenuByName("Equipping").RunMenu())
+                {
+                    case 0:
+                        P.Equip((Armour)MasterGameObject.GetMenuByName("Equipping W or A").RunDynamicMenu(P.GetAllArmourInInventory()));
+                        PlayerMenu(P);
+                        break;
+                    case 1:
+                        P.Equip((Weapon)MasterGameObject.GetMenuByName("Equipping W or A").RunDynamicMenu(P.GetAllWeaponInInventory()));
+                        PlayerMenu(P);
+                        break;
+                    case 2:
+                        PlayerMenu(P);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+
+        }
+    }
+        </code></pre>
+
+        <h2>PlayerClass</h2>
+
+        <p>The PlayerClass class is an object that stores all the stats for a player class, including the weapons they start with. It acts more as a storage object than anything else and is used by the MasterGameObject. Once a class is selected, it is converted
+            into an actual player object.</p>
+        <pre><code class="language-csharp">
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
+
+    namespace OOP_game_Final_Project
+    {
+        internal class PlayerClass
+        {
+            public string Name { get; set; }
+            public int[] StartingStats { get; private set; }
+            public Armour StartingArmour { get; private set; }
+            public Weapon StartingWeapon { get; private set; }
+            public int StartingGold { get; private set; }
+            public float StartingMaxHealth { get; private set; }
+
+            public PlayerClass(string name, int[] startingStats,Armour startingArmour, Weapon startingWeapon, int startingGold,float startingMaxHealth )
+            {
+                Name = name;
+                StartingStats = startingStats;
+                StartingArmour = startingArmour;
+                StartingWeapon = startingWeapon;
+                StartingGold = startingGold;
+                StartingMaxHealth = startingMaxHealth;
+            }
+        }
+    }
+        </code></pre>
+    </section>
+
+
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Brett Bowley</p>
+        </div>
+    </footer>
+</body>
+
+</html>

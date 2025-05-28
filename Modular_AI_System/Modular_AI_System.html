@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Brett Bowley Portfolio</title>
+    <link rel="stylesheet" href="Style.css">
+    <script type="text/javascript" src="JS.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+
+</head>
+
+<body>
+    <nav>
+        <a href="../Index.html">
+            <div class="circle-wrapper">
+                <div class="circle"></div>
+            </div>
+        </a>
+
+        <img id="logo" src="/Img/logo.svg" />
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Modular AI System</h1>
+            <p>Scroll Down To See Documentation</p>
+        </div>
+    </section>
+
+    <section class="icon-links">
+        <a href="https://www.youtube.com/watch?v=m0LoXoze8DY&list=PLPyXEPfmGyRrapYTCyN0Y8-GXSSFITI6A" target="_blank" title="YouTube" id="YouTube">
+            <i class="fab fa-youtube"></i>
+        </a>
+
+        <a href="https://github.com/Bearium-BB/Modular-AI-System-Portfolio" target="_blank" title="GitHub" id="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+    </section>
+
+
+    <section class="documentation-content">
+        <h2>Introduction</h2>
+        <p>This project demonstrates how I created a modular AI system that allows you to easily swap out code, making it easier to develop AI in games without having to rewrite code multiple times, something that's considered bad practice and generally
+            disliked. While this approach does introduce some limitations and relies heavily on Unity Events to pass data around, it ultimately results in a more modular and maintainable system. By following a clear set of rules, development becomes more
+            streamlined and efficient.</p>
+
+        <h2>GetData</h2>
+        <p>You may be asking yourself, "Okay, you told me about the five groups and how they work together—now what?"</p>
+        <p>Well, first of all, we should probably start with Get Data modules, because they essentially act as the senses for the AI.</p>
+        <p>You might be wondering, "What do you mean by senses for the AI?"</p>
+        <p>Let’s say you want your AI to be able to see. You’d create a Get Data component for vision. This vision module could use raycasts to shoot out beams and detect objects, or it could use colliders to sense when something enters its range.</p>
+        <p>Once this sensory data is collected, it’s sent to the Action Manager—as long as the relevant event has been triggered, or however you're choosing to pass the data. Personally, I prefer using Unity Events because they make the system more modular.</p>
+
+        <h2>Action Manager</h2>
+        <p>However, it’s worth noting that while events improve modularity, they can sometimes make debugging more difficult, depending on how your code is structured.</p>
+        <p>You may be asking yourself, "What does the Action Manager actually do?"</p>
+        <p>Essentially, the Action Manager receives data and, based on that data, determines what actions the AI should take. The specific actions that the Action Manager can perform will be discussed later, but for now, think of it this way: the Action
+            Manager processes the data it receives and uses it to decide what the AI should do based on the available actions.</p>
+
+        <h2>Models</h2>
+        <p>But there's one more important thing happening between the Get Data module and the Action Manager—and that’s what’s actually being transferred between them.</p>
+        <p>What’s being passed along are called Models. Models are simple data containers used for transferring information. For example, let’s say you want to send both a transform and a boolean indicating whether the AI can see the player. Instead of sending
+            those separately, you can package them into a single Model class and send it through an event (or however you're passing data).</p>
+        <p>This makes data transfer between systems much easier. Rather than having multiple events or methods for each individual variable, you can just use one Model to carry everything.</p>
+
+        <h2>Action</h2>
+        <p>Now that you know about three of the modules, let’s talk about one of the other two: the Action.</p>
+        <p>An Action is essentially what moves the agent—or AI—or makes it perform a specific behavior. This could include things like attacking, chasing, searching, or any other kind of interaction. Actions are highly versatile and can be designed to do
+            just about anything.</p>
+
+        <h2>Visualizers</h2>
+        <p>One thing worth noting: I'm considering removing Visualizersas a separate module. The reason is that Visualizers are, in many ways, just another form of action. For example, updating a character's color could simply be handled by an UpdateCharacterColorAction,
+            rather than having a separate UpdateCharacterColorVisual.</p>
+        <p>Now let’s talk about the last code group: Visualizers.</p>
+        <p>Visualizers are very similar to Actions—they act upon the agent to trigger some kind of behavior. The main difference is that Visualizers are typically focused on cosmetic or UI-related changes, like updating animations or displaying effects.
+            However, the overlap between Actions and Visualizers is significant, which is why I’m considering removing Visualizers entirely in the future.</p>
+        <p>As of now, they are still part of the system, but in version 2, they will likely be removed to simplify the architecture and avoid redundancy.</p>
+        <img src="../Img/GETDATA.jpg" alt="">
+        <h2>Implementation</h2>
+        <p>The steps below are the first set of steps in implementing a modular AI in your project </p>
+        <ol>
+            <li>Copy and paste <strong>AlienVisionGetData</strong> and <strong>AlienActionManager</strong> into a Unity project.</li>
+            <li>Create a capsule inside a Unity scene.</li>
+            <li>On your newly created capsule, drag and drop <strong>AlienVisionGetData</strong> and <strong>AlienActionManager</strong>.</li>
+            <li>On <strong>AlienVisionGetData</strong>, create a new event in Vision Data by clicking the plus sign (+).</li>
+            <li>For the new event, drag and drop <strong>AlienActionManager</strong> into its target field.</li>
+            <li>On your event, click on the drop-down menu that says "No Function".</li>
+            <li>Locate <strong>AlienActionManager</strong> in the drop-down menu and click on it.</li>
+            <li>A new drop-down menu will appear. Locate and click on <strong>CanYouSeeYou</strong>.</li>
+            <li>For the last step of rename the capsule to AlienAI</li>
+        </ol>
+
+        <p>Now we're going to move on to the next set of steps</p>
+
+        <h3>AlienVisionGetData</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.Events;
+    
+    public class AlienVisionGetData : MonoBehaviour
+    {
+        public float viewRadius = 10f;
+        public float viewAngle = 90f;
+        public int horizontalResolution = 20;
+        public int verticalResolution = 10;
+        public UnityEvent<AlienVisionModel> visionData = new UnityEvent<AlienVisionModel>();
+        // This is allocating space for raycast hits for performance
+        RaycastHit[] hits = new RaycastHit[10];
+        public LayerMask visionMask;
+    
+        void Update()
+        {
+            Cast3DVisionCone();
+        }
+    
+        void Cast3DVisionCone()
+        {
+            Vector3 origin = transform.position;
+            bool playerSeen = false;
+    
+            for (int y = 0; y <= verticalResolution && !playerSeen; y++)
+            {
+                //Stack overflow with some modifications
+                float verticalAngle = Mathf.Lerp(-viewAngle / 2, viewAngle / 2, (float)y / verticalResolution);
+                //Stack overflow with some modifications
+    
+    
+                for (int x = 0; x <= horizontalResolution && !playerSeen; x++)
+                {
+                    //Stack overflow with some modifications
+                    float horizontalAngle = Mathf.Lerp(-viewAngle / 2, viewAngle / 2, (float)x / horizontalResolution);
+                    //Stack overflow with some modifications
+    
+                    Vector3 dir = DirFromAngles(horizontalAngle, verticalAngle);
+    
+                    // This gets the closest hit array and see how many were hit as well
+                    int hitCount = Physics.RaycastNonAlloc(origin, dir, hits, viewRadius, visionMask);
+    
+                    if (hitCount > 0)
+                    {
+                        // Prevents AI from seeing through walls
+                        // Find the closest hit
+                        RaycastHit closestHit = hits[0];
+                        for (int i = 1; i < hitCount; i++)
+                        {
+                            if (hits[i].distance < closestHit.distance)
+                            {
+                                closestHit = hits[i];
+                            }
+                        }
+    
+                        if (closestHit.collider.CompareTag("Player"))
+                        {
+                            Debug.DrawRay(origin, dir * closestHit.distance, Color.red);
+                            visionData.Invoke(new AlienVisionModel(closestHit.collider.transform, true));
+                            playerSeen = true;
+                        }
+                        else
+                        {
+                            Debug.DrawRay(origin, dir * closestHit.distance, Color.cyan);
+                        }
+                    }
+    
+                }
+    
+            }
+    
+            if (!playerSeen)
+            {
+                visionData.Invoke(new AlienVisionModel(null, false));
+            }
+        }
+    
+        //ChatGPT couldn't figure out how to get the rotation done properly—really bad at rotation math. I hope we get to learn a lot about rotation math in the course
+        Vector3 DirFromAngles(float horizontalAngle, float verticalAngle)
+        {
+            Quaternion rotation = Quaternion.Euler(transform.eulerAngles.x + verticalAngle, transform.eulerAngles.y + horizontalAngle, 0);
+            return rotation * Vector3.forward;
+        }
+        //ChatGPT couldn't figure out how to get the rotation done properly—really bad at rotation math. I hope we get to learn a lot about rotation math in the course
+    
+    }
+    
+    public class AlienVisionModel
+    {
+        public Transform pos;
+        public bool isEnvision;
+    
+        public AlienVisionModel(Transform Pos, bool isEnvision) 
+        { 
+            this.pos = Pos;
+            this.isEnvision = isEnvision;
+        }
+    }
+    </code></pre>
+        <h3>AlienActionManager</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.Events;
+    using UnityEngine.UIElements;
+    using static Unity.Burst.Intrinsics.X86;
+    
+    public class AlienActionManager : MonoBehaviour
+    {
+        public State state = State.Searching;
+        public UnityEvent<Vector3> searchForPlayer;
+        public UnityEvent<Transform> chasePlayer;
+        //How long it takes for the AI to go back to searching
+        public float timeToSearch = 5f;
+    
+        private Vector3 searchPosition;
+        //Times how long it hasn't seen a player
+        private float loseSightTimer = 0f;
+    
+        AlienVisionModel alienVisionModel;
+    
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start()
+        {
+            //kind of just starts off the logic States
+            SearchForPlayer(transform.position);
+        }
+    
+        // Update is called once per frame
+        void Update()
+        {
+            Debug.Log(state);
+            if (state == State.Chasing)
+            {
+                ChasePlayer();
+                if (alienVisionModel.isEnvision)
+                {
+                    loseSightTimer = 0f;
+                }
+                else
+                {
+                    loseSightTimer += Time.deltaTime;
+    
+                    if (loseSightTimer >= timeToSearch)
+                    {
+                        state = State.Searching;
+                    }
+                }
+            }
+        }
+        //Changes the state and update the visual model
+        public void CanSeePlayer(AlienVisionModel model)
+        {
+            alienVisionModel = model;
+            if (model.isEnvision == true)
+            {
+                state = State.Chasing;
+            }
+            ChasePlayer(alienVisionModel.pos);
+        }
+    
+        public void ChasePlayer(Transform transform)
+        {
+            chasePlayer.Invoke(transform);
+        }
+    
+        public void ChasePlayer()
+        {
+            chasePlayer.Invoke(null);
+        }
+    
+        public void UpdateSearchPosition(Vector3 pos)
+        {
+            searchPosition = pos;
+        }
+    
+        public void RepeatSearch()
+        {
+            if (state == State.Searching)
+            {
+                SearchForPlayer();
+            }
+        }
+    
+        public void SearchForPlayer(Vector3 pos)
+        {
+            if (state == State.Searching)
+            {
+                searchForPlayer.Invoke(pos);
+            }
+        }
+    
+        public void SearchForPlayer()
+        {
+            if (state == State.Searching)
+            {
+                searchForPlayer.Invoke(searchPosition);
+            }
+        }
+    
+        public enum State
+        {
+            Searching,
+            Chasing,
+        }
+    }
+        </code></pre>
+
+        <p>Congratulations on making it to the second set of steps.</p>
+        <ol>
+            <li>Copy and paste <strong>GivePlayerPositionGetData</strong> into the same project as the other scripts.</li>
+            <li>Drag and drop <strong>GivePlayerPositionGetData</strong> onto <strong>AlienAI</strong>, the game object you created in the last set of steps.</li>
+            <li>Create a new capsule and name it <strong>Player</strong>.</li>
+            <li>Click on <strong>AlienAI</strong> and locate <strong>GivePlayerPositionGetData</strong>.</li>
+            <li>Locate the <strong>Player</strong> game object in your hierarchy.</li>
+            <li>With <strong>AlienAI</strong> still selected, drag and drop the <strong>Player</strong> game object into the <strong>Player Position</strong> variable of <strong>GivePlayerPositionGetData</strong>.</li>
+            <li>On <strong>AlienAI</strong>, in the <strong>GivePlayerPositionGetData</strong> script, create a new event by clicking the plus sign (+) next to the variable called <strong>SearchPosition</strong>.</li>
+            <li>Drag and drop <strong>AlienActionManager</strong> into the new event under <strong>SearchPosition</strong>.</li>
+            <li>Click the drop-down menu that says <em>No Function</em>.</li>
+            <li>Locate <strong>AlienActionManager</strong> in the menu and click on it.</li>
+            <li>In the new drop-down menu, locate <strong>UpdateSearchPosition</strong> and click on it.</li>
+        </ol>
+
+        <p>You just completed the second set of steps.</p>
+
+        <h3>GivePlayerPositionGetData</h3>
+        <pre><code class="language-csharp">
+            using System.Security.Cryptography;
+    using UnityEngine;
+    using UnityEngine.Events;
+
+    public class GivePlayerPositionGetData : MonoBehaviour
+    {
+        public Transform playerPosition;
+        public Vector3 oldPlayerPosition;
+        public float radius = 10;
+        public UnityEvent<Vector3> searchPosition;
+
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start()
+        {
+            oldPlayerPosition = playerPosition.position;
+            searchPosition.Invoke(playerPosition.position);
+        }
+
+        // Update is called once per frame
+        void FixedUpdate()
+        {
+            if (GetPlayerDistance(playerPosition.position) >= radius)
+            {
+                searchPosition.Invoke(playerPosition.position);
+                oldPlayerPosition = playerPosition.position;
+            }
+        }
+
+        public float GetPlayerDistance(Vector3 pos)
+        {
+            float dist = Vector3.Distance(pos, oldPlayerPosition);
+            return dist;
+        }
+    }
+        </code></pre>
+        <p>Welcome to the set of step three.</p>
+        <ol>
+            <li>Copy and paste <strong>SearchForPlayerAction</strong> into the same project as the other scripts.</li>
+            <li>Drag and drop <strong>SearchForPlayerAction</strong> onto <strong>AlienAI</strong>.</li>
+            <li>Locate <strong>AlienActionManager</strong> and create a new event for the variable called <strong>Search For Player</strong> by clicking its plus sign (+).</li>
+            <li>Drag and drop <strong>SearchForPlayerAction</strong> into the new event for <strong>Search For Player</strong>.</li>
+            <li>Locate <strong>SearchForPlayerAction</strong> in the event and click on it to open a new drop-down menu.</li>
+            <li>Locate and click on <strong>RandomPoint</strong>.</li>
+            <li>Add a component called <strong>NavMeshAgent</strong> to <strong>AlienAI</strong>:
+                <ol>
+                    <li>Make sure <strong>AlienAI</strong> is selected.</li>
+                    <li>Click on <strong>Add Component</strong>.</li>
+                    <li>Use the search bar to search for <strong>NavMeshAgent</strong>.</li>
+                    <li>Select it from the list (should be the first result).</li>
+                </ol>
+            </li>
+            <li>Drag and drop the new <strong>NavMeshAgent</strong> component into the empty <strong>Agent</strong> slot in <strong>SearchForPlayerAction</strong>.</li>
+            <li>Locate <strong>SearchForPlayerAction</strong> on <strong>AlienAI</strong>.</li>
+            <li>On the event called <strong>Repeat Action</strong>, click the plus sign (+) twice to add two new events.</li>
+            <li>In both events, drag and drop <strong>AlienActionManager</strong>.</li>
+            <li>On the first event:
+                <ol>
+                    <li>Click on <em>No Function</em> to open the drop-down menu.</li>
+                    <li>Locate <strong>AlienActionManager</strong> and click on it.</li>
+                    <li>Click on <strong>SearchForPlayer</strong>.</li>
+                </ol>
+            </li>
+            <li>On the second event:
+                <ol>
+                    <li>Repeat the same steps as above, but instead of <strong>SearchForPlayer</strong>, click on <strong>RepeatSearch</strong>.</li>
+                </ol>
+            </li>
+        </ol>
+
+        <p>Great job, you completed one of the more complicated steps!</p>
+        <h3>SearchForPlayerAction</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.AI;
+    using UnityEngine.Events;
+    using UnityEngine.UIElements;
+    
+    public class SearchForPlayerAction : MonoBehaviour
+    {
+        public NavMeshAgent agent;
+        public UnityEvent repeatAction;
+        public float radius = 10;
+    
+        void Start()
+        {
+            
+        }
+    
+        // Update is called once per frame
+        void FixedUpdate()
+        {
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+            {
+                if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
+                {
+                    Debug.Log("Destination reached!");
+                    repeatAction.Invoke();
+                }
+            }
+        }
+    
+        public void RandomPoint(Vector3 pos)
+        {
+            Vector3 randomDirection = Random.insideUnitSphere * radius;
+            randomDirection += pos;
+    
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomDirection, out hit, radius, NavMesh.AllAreas))
+            {
+                agent.SetDestination(hit.position);
+                Debug.Log("Found valid position: " + hit.position);
+    
+            }
+            else
+            {
+                Debug.Log("No valid NavMesh position found near: " + pos);
+            }
+        }
+    }
+        </code></pre>
+
+
+        <p>You got this! You're approaching the end. Welcome to step four.</p>
+        <ol>
+            <li>Copy and paste <strong>AgentMover</strong> into the same project as the other scripts.</li>
+            <li>Drag and drop <strong>AgentMover</strong> onto <strong>AlienAI</strong>.
+                <p><em>// Note: This script does not follow the same naming convention as the others because it was the original first movement script in this modular system. This demonstrates how easily older or existing code can be integrated into the AI system—even if it wasn’t originally designed for it.</em></p>
+            </li>
+            <li>Drag and drop the <strong>NavMeshAgent</strong> component onto the empty <strong>Agent</strong> field in <strong>AgentMover</strong>.</li>
+            <li>Locate <strong>AlienActionManager</strong> on <strong>AlienAI</strong>.</li>
+            <li>Locate the event called <strong>Chase Player</strong>.</li>
+            <li>Add a new event by clicking the plus sign (+).</li>
+            <li>Drag and drop <strong>AgentMover</strong> into the new event.</li>
+            <li>Click on the drop-down menu that says <em>No Function</em>.</li>
+            <li>Locate and click on <strong>AgentMover</strong> to open a new drop-down menu.</li>
+            <li>Locate and click on <strong>Move</strong>.</li>
+        </ol>
+
+        <p>You're about to approach the final set of steps!</p>
+        <h3>AgentMover</h3>
+        <pre><code class="language-csharp">
+    using UnityEngine;
+    using UnityEngine.AI;
+    
+    public class AgentMover : MonoBehaviour
+    {
+        public NavMeshAgent agent;
+        Transform playerTransform;
+    
+        public void Move(Transform pos)
+        {
+            if (pos != null)
+            {
+                playerTransform = pos;
+            }
+    
+            if (playerTransform != null)
+            {
+                agent.destination = playerTransform.position;
+                Vector3 direction = playerTransform.position - transform.position;
+                Quaternion rotation = Quaternion.LookRotation(direction);
+                transform.rotation = rotation;
+            }
+    
+        }
+    }
+        </code></pre>
+        <p><strong>You made it to the final set of steps. Hope you enjoyed the tutorial!</strong></p>
+        <ol>
+            <li>Create a new <strong>Plane</strong>.</li>
+            <li>Rename it to <strong>Map</strong>.</li>
+            <li>On the <strong>Map</strong> object, add a new component called <strong>NavMeshSurface</strong> (use the same method you used to add the <strong>NavMeshAgent</strong>).</li>
+            <li>Make sure the <strong>Player</strong> and <strong>AlienAI</strong> objects are positioned above the plane by about 3 meters.</li>
+            <li>On the <strong>NavMeshSurface</strong> component, click the <strong>Bake</strong> button.</li>
+            <li>Locate the <strong>Player</strong> in the hierarchy and click on it.</li>
+            <li>At the top of the <strong>Inspector</strong>, find the <strong>Layer</strong> dropdown and click it.</li>
+            <li>In the dropdown, click <strong>Add Layer</strong>.</li>
+            <li>In the empty text boxes, create two new layers:
+                <ol>
+                    <li><strong>Obstacle</strong></li>
+                    <li><strong>Player</strong></li>
+                </ol>
+            </li>
+            <li>Find your <strong>Player</strong> object again in the hierarchy.</li>
+            <li>Click the <strong>Layer</strong> dropdown again and choose the new <strong>Player</strong> layer.</li>
+            <li>Go to your <strong>AlienAI</strong> object.</li>
+            <li>Locate the <strong>AlienVisionGetData</strong> component.</li>
+            <li>Find the variable called <strong>Vision Mask</strong> (should be near the bottom).</li>
+            <li>Click on its dropdown and add the layers <strong>Obstacle</strong> and <strong>Player</strong>.</li>
+        </ol>
+
+        <p>
+            <strong>Explanation:</strong> The <strong>Obstacle</strong> layer prevents the AI from seeing through the entire map, while the <strong>Player</strong> layer helps the AI distinguish the player from other obstacles.
+        </p>
+
+        <p>Congratulations! You completed the tutorial.</p>
+        <p>I hope you had no issues and had fun. Now you can experiment with your own scripts and modify this system to suit your own AI behaviors!</p>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Brett Bowley</p>
+        </div>
+    </footer>
+</body>
+
+</html>
